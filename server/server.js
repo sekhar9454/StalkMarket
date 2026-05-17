@@ -56,7 +56,16 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Finnhub API: ${process.env.FINNHUB_API_KEY ? 'Enabled' : 'Using mock data'}`);
 });
+
+// Graceful shutdown — prevents EADDRINUSE on nodemon restart
+const shutdown = () => {
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(1), 5000);
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

@@ -13,80 +13,90 @@ const hasApiKey = () => {
   return process.env.FINNHUB_API_KEY && process.env.FINNHUB_API_KEY.trim() !== '';
 };
 
+// Check if symbol is an Indian stock (Finnhub free tier doesn't support .NS/.BO)
+const isIndianSymbol = (symbol) => {
+  const s = symbol.toUpperCase().trim();
+  if (s.includes('.NS') || s.includes('.BO')) return true;
+  return mockStocks.some((stock) => stock.symbol.replace('.NS', '') === s);
+};
+
+// Normalize symbol — ensure Indian stocks get .NS suffix
+const normalizeSymbol = (symbol) => {
+  const s = symbol.toUpperCase().trim();
+  if (s.includes('.')) return s;
+  if (isIndianSymbol(s)) return `${s}.NS`;
+  return s;
+};
+
+// Strip the .NS suffix for display purposes
+const displaySymbol = (symbol) => {
+  return symbol.replace('.NS', '').replace('.BO', '');
+};
+
+// Find stock from mock data
+const findMockStock = (symbol) => {
+  const s = symbol.toUpperCase().trim();
+  return mockStocks.find(
+    (stock) =>
+      stock.symbol === s ||
+      stock.symbol.replace('.NS', '') === s ||
+      stock.symbol.replace('.NS', '') === s.replace('.NS', '')
+  );
+};
+
 // Search stocks by query
 const searchStocks = async (query) => {
-  if (!hasApiKey()) {
-    // Use mock data for search
-    const q = query.toLowerCase();
-    const results = mockStocks
-      .filter(
-        (s) =>
-          s.symbol.toLowerCase().includes(q) ||
-          s.name.toLowerCase().includes(q)
-      )
-      .slice(0, 10)
-      .map((s) => ({
-        symbol: s.symbol,
-        description: s.name,
-        type: 'Common Stock',
-      }));
-    return results;
-  }
+  const q = query.toLowerCase();
 
-  try {
-    const { data } = await finnhubClient.get('/search', {
-      params: { q: query, token: process.env.FINNHUB_API_KEY },
-    });
-    return (data.result || [])
-      .filter((r) => r.type === 'Common Stock')
-      .slice(0, 10);
-  } catch (error) {
-    console.error('Finnhub search error:', error.message);
-    // Fallback to mock data
-    const q = query.toLowerCase();
-    return mockStocks
-      .filter(
-        (s) =>
-          s.symbol.toLowerCase().includes(q) ||
-          s.name.toLowerCase().includes(q)
-      )
-      .slice(0, 10)
-      .map((s) => ({
-        symbol: s.symbol,
-        description: s.name,
-        type: 'Common Stock',
-      }));
-  }
+  // Search mock data for Indian stocks
+  const mockResults = mockStocks
+    .filter(
+      (s) =>
+        s.symbol.toLowerCase().includes(q) ||
+        s.symbol.replace('.NS', '').toLowerCase().includes(q) ||
+        s.name.toLowerCase().includes(q)
+    )
+    .slice(0, 10)
+    .map((s) => ({
+      symbol: s.symbol,
+      description: s.name,
+      displaySymbol: displaySymbol(s.symbol),
+      type: 'Common Stock',
+      exchange: 'NSE',
+    }));
+
+  // For Indian market, mock data is our primary source since
+  // Finnhub free tier doesn't support Indian stocks
+  return mockResults;
 };
 
 // Get quote for a specific symbol
 const getQuote = async (symbol) => {
+  const normalizedSymbol = normalizeSymbol(symbol);
+  const mockStock = findMockStock(symbol);
+
+  // Indian stocks: always use mock data (Finnhub free tier doesn't support .NS)
+  if (isIndianSymbol(normalizedSymbol)) {
+    return mockStock ? getRandomizedStock(mockStock) : null;
+  }
+
+  // Non-Indian stocks: try Finnhub API if key exists
   if (!hasApiKey()) {
-    // Use mock data
-    const stock = mockStocks.find(
-      (s) => s.symbol === symbol.toUpperCase()
-    );
-    if (stock) {
-      return getRandomizedStock(stock);
-    }
-    return null;
+    return mockStock ? getRandomizedStock(mockStock) : null;
   }
 
   try {
     const { data } = await finnhubClient.get('/quote', {
-      params: { symbol: symbol.toUpperCase(), token: process.env.FINNHUB_API_KEY },
+      params: { symbol: normalizedSymbol, token: process.env.FINNHUB_API_KEY },
     });
 
     if (!data || data.c === 0) {
-      // No data from API, try mock
-      const stock = mockStocks.find(
-        (s) => s.symbol === symbol.toUpperCase()
-      );
-      return stock ? getRandomizedStock(stock) : null;
+      return mockStock ? getRandomizedStock(mockStock) : null;
     }
 
     return {
-      symbol: symbol.toUpperCase(),
+      symbol: normalizedSymbol,
+      displaySymbol: displaySymbol(normalizedSymbol),
       price: data.c,
       change: data.d,
       changePercent: data.dp,
@@ -97,73 +107,70 @@ const getQuote = async (symbol) => {
     };
   } catch (error) {
     console.error('Finnhub quote error:', error.message);
-    const stock = mockStocks.find(
-      (s) => s.symbol === symbol.toUpperCase()
-    );
-    return stock ? getRandomizedStock(stock) : null;
+    return mockStock ? getRandomizedStock(mockStock) : null;
   }
 };
 
 // Get company profile
 const getCompanyProfile = async (symbol) => {
+  const normalizedSymbol = normalizeSymbol(symbol);
+  const mockStock = findMockStock(symbol);
+
+  const mockProfile = mockStock
+    ? {
+        name: mockStock.name,
+        ticker: displaySymbol(mockStock.symbol),
+        marketCapitalization: mockStock.marketCap,
+        finnhubIndustry: mockStock.industry,
+        exchange: 'NSE',
+        country: 'IN',
+        currency: 'INR',
+      }
+    : null;
+
+  // Indian stocks: use mock data directly
+  if (isIndianSymbol(normalizedSymbol)) {
+    return mockProfile;
+  }
+
   if (!hasApiKey()) {
-    const stock = mockStocks.find(
-      (s) => s.symbol === symbol.toUpperCase()
-    );
-    if (stock) {
-      return {
-        name: stock.name,
-        ticker: stock.symbol,
-        marketCapitalization: stock.marketCap,
-        finnhubIndustry: stock.industry,
-      };
-    }
-    return null;
+    return mockProfile;
   }
 
   try {
     const { data } = await finnhubClient.get('/stock/profile2', {
-      params: { symbol: symbol.toUpperCase(), token: process.env.FINNHUB_API_KEY },
+      params: { symbol: normalizedSymbol, token: process.env.FINNHUB_API_KEY },
     });
-    return data;
+    if (data && data.name) {
+      return { ...data, displaySymbol: displaySymbol(normalizedSymbol) };
+    }
+    return mockProfile;
   } catch (error) {
     console.error('Finnhub profile error:', error.message);
-    const stock = mockStocks.find(
-      (s) => s.symbol === symbol.toUpperCase()
-    );
-    return stock
-      ? {
-          name: stock.name,
-          ticker: stock.symbol,
-          marketCapitalization: stock.marketCap,
-          finnhubIndustry: stock.industry,
-        }
-      : null;
+    return mockProfile;
   }
 };
 
-// Get trending/popular stocks
+// Get trending/popular Indian stocks (always from mock data)
 const getTrendingStocks = async () => {
-  // Return a curated list of trending stocks with live quotes
   const trendingSymbols = [
-    'AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA',
-    'NVDA', 'META', 'NFLX', 'AMD', 'UBER',
+    'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'ICICIBANK.NS',
+    'BHARTIARTL.NS', 'SBIN.NS', 'ITC.NS', 'TATAMOTORS.NS', 'LT.NS',
   ];
 
-  const quotes = await Promise.all(
-    trendingSymbols.map(async (symbol) => {
-      const quote = await getQuote(symbol);
-      if (quote) {
-        const stock = mockStocks.find((s) => s.symbol === symbol);
-        return {
-          ...quote,
-          symbol,
-          name: quote.name || (stock ? stock.name : symbol),
-        };
-      }
-      return null;
-    })
-  );
+  const quotes = trendingSymbols.map((symbol) => {
+    const stock = mockStocks.find((s) => s.symbol === symbol);
+    if (stock) {
+      const randomized = getRandomizedStock(stock);
+      return {
+        ...randomized,
+        symbol,
+        displaySymbol: displaySymbol(symbol),
+        name: stock.name,
+      };
+    }
+    return null;
+  });
 
   return quotes.filter(Boolean);
 };
@@ -173,7 +180,7 @@ const getBatchQuotes = async (symbols) => {
   const quotes = await Promise.all(
     symbols.map(async (symbol) => {
       const quote = await getQuote(symbol);
-      return quote ? { ...quote, symbol } : null;
+      return quote ? { ...quote, symbol, displaySymbol: displaySymbol(symbol) } : null;
     })
   );
   return quotes.filter(Boolean);
@@ -185,4 +192,5 @@ module.exports = {
   getCompanyProfile,
   getTrendingStocks,
   getBatchQuotes,
+  displaySymbol,
 };

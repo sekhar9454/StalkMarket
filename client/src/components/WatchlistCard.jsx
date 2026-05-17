@@ -35,7 +35,7 @@ const WatchlistCard = ({ watchlist, onDelete }) => {
                 className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-white/[0.03]"
               >
                 <span className="text-xs font-medium text-gray-300">
-                  {stock.symbol}
+                  {stock.symbol?.replace('.NS', '').replace('.BO', '')}
                 </span>
                 <span className="text-xs text-gray-500 truncate ml-2 max-w-[120px]">
                   {stock.name}

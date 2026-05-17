@@ -63,7 +63,7 @@ const SearchBar = ({ onAddStock, existingSymbols = [] }) => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => results.length > 0 && setIsOpen(true)}
-          placeholder="Search stocks by name or symbol..."
+          placeholder="Search NSE stocks by name or symbol..."
           className="input-field pl-12 pr-10"
           id="stock-search-input"
         />
@@ -109,16 +109,19 @@ const SearchBar = ({ onAddStock, existingSymbols = [] }) => {
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-cyan/10 to-accent-purple/10 flex items-center justify-center">
                     <span className="text-[10px] font-bold text-accent-cyan">
-                      {stock.symbol?.substring(0, 2)}
+                      {(stock.displaySymbol || stock.symbol)?.substring(0, 2)}
                     </span>
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-white">
-                      {stock.symbol}
+                      {stock.displaySymbol || stock.symbol?.replace('.NS', '')}
                     </p>
                     <p className="text-xs text-gray-500 truncate max-w-[200px]">
                       {stock.description || stock.name}
                     </p>
+                    {stock.exchange && (
+                      <span className="text-[9px] text-accent-cyan/60 font-medium">{stock.exchange}</span>
+                    )}
                   </div>
                 </div>
                 {alreadyAdded ? (

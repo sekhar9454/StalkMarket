@@ -142,7 +142,7 @@ const Dashboard = () => {
                 <HiLightningBolt className="w-5 h-5 text-accent-blue" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">Live</p>
+                <p className="text-2xl font-bold text-white">NSE</p>
                 <p className="text-xs text-gray-500">Market Data</p>
               </div>
             </div>
@@ -166,10 +166,10 @@ const Dashboard = () => {
                     className="flex items-center gap-3 px-4 py-2 rounded-lg bg-white/[0.03] flex-shrink-0 min-w-[200px]"
                   >
                     <span className="text-sm font-bold text-white">
-                      {stock.symbol}
+                      {stock.displaySymbol || stock.symbol?.replace('.NS', '')}
                     </span>
                     <span className="text-sm font-mono text-gray-300">
-                      ${stock.price?.toFixed(2)}
+                      ₹{stock.price?.toFixed(2)}
                     </span>
                     <span
                       className={`text-xs font-mono font-semibold ${
@@ -259,7 +259,7 @@ const Dashboard = () => {
         {/* Trending Stocks Grid */}
         {trendingStocks.length > 0 && (
           <div>
-            <h2 className="text-xl font-bold text-white mb-4">Market Overview</h2>
+            <h2 className="text-xl font-bold text-white mb-4">NSE Market Overview</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {trendingStocks.map((stock) => (
                 <StockCard key={stock.symbol} stock={stock} />
@@ -298,7 +298,7 @@ const Dashboard = () => {
                 type="text"
                 value={newWatchlistName}
                 onChange={(e) => setNewWatchlistName(e.target.value)}
-                placeholder="e.g., Tech Stocks, Growth Portfolio..."
+                placeholder="e.g., Nifty 50, Banking Stocks, IT Portfolio..."
                 className="input-field mb-4"
                 autoFocus
                 id="watchlist-name-input"

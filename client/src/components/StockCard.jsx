@@ -3,6 +3,7 @@ import { HiTrendingUp, HiTrendingDown, HiMinus } from 'react-icons/hi';
 const StockCard = ({ stock, onRemove, showRemove = false, compact = false }) => {
   const isPositive = stock.change > 0;
   const isNeutral = stock.change === 0;
+  const ticker = stock.displaySymbol || stock.symbol?.replace('.NS', '').replace('.BO', '');
 
   if (compact) {
     return (
@@ -10,11 +11,11 @@ const StockCard = ({ stock, onRemove, showRemove = false, compact = false }) => 
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-cyan/20 to-accent-purple/20 flex items-center justify-center">
             <span className="text-xs font-bold text-accent-cyan">
-              {stock.symbol?.charAt(0)}
+              {ticker?.charAt(0)}
             </span>
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">{stock.symbol}</p>
+            <p className="text-sm font-semibold text-white">{ticker}</p>
             <p className="text-xs text-gray-500 truncate max-w-[120px]">
               {stock.name}
             </p>
@@ -24,7 +25,7 @@ const StockCard = ({ stock, onRemove, showRemove = false, compact = false }) => 
           {stock.price ? (
             <>
               <p className="text-sm font-mono font-semibold text-white">
-                ${stock.price?.toFixed(2)}
+                ₹{stock.price?.toFixed(2)}
               </p>
               <p
                 className={`text-xs font-mono font-medium ${
@@ -49,11 +50,11 @@ const StockCard = ({ stock, onRemove, showRemove = false, compact = false }) => 
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-cyan/20 to-accent-purple/20 border border-white/10 flex items-center justify-center">
             <span className="text-sm font-bold text-accent-cyan">
-              {stock.symbol?.substring(0, 2)}
+              {ticker?.substring(0, 2)}
             </span>
           </div>
           <div>
-            <h3 className="font-semibold text-white text-sm">{stock.symbol}</h3>
+            <h3 className="font-semibold text-white text-sm">{ticker}</h3>
             <p className="text-xs text-gray-400 truncate max-w-[140px]">
               {stock.name}
             </p>
@@ -74,7 +75,7 @@ const StockCard = ({ stock, onRemove, showRemove = false, compact = false }) => 
         <div>
           {stock.price ? (
             <p className="text-lg font-mono font-bold text-white">
-              ${stock.price?.toFixed(2)}
+              ₹{stock.price?.toFixed(2)}
             </p>
           ) : (
             <div className="skeleton w-20 h-6 rounded" />
@@ -113,15 +114,15 @@ const StockCard = ({ stock, onRemove, showRemove = false, compact = false }) => 
         <div className="mt-3 pt-3 border-t border-white/5 grid grid-cols-3 gap-2">
           <div>
             <p className="text-[10px] text-gray-500 uppercase tracking-wider">High</p>
-            <p className="text-xs font-mono text-gray-300">${stock.high?.toFixed(2)}</p>
+            <p className="text-xs font-mono text-gray-300">₹{stock.high?.toFixed(2)}</p>
           </div>
           <div>
             <p className="text-[10px] text-gray-500 uppercase tracking-wider">Low</p>
-            <p className="text-xs font-mono text-gray-300">${stock.low?.toFixed(2)}</p>
+            <p className="text-xs font-mono text-gray-300">₹{stock.low?.toFixed(2)}</p>
           </div>
           <div>
             <p className="text-[10px] text-gray-500 uppercase tracking-wider">Open</p>
-            <p className="text-xs font-mono text-gray-300">${stock.open?.toFixed(2)}</p>
+            <p className="text-xs font-mono text-gray-300">₹{stock.open?.toFixed(2)}</p>
           </div>
         </div>
       )}

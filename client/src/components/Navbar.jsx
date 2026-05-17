@@ -26,7 +26,7 @@ const Navbar = () => {
               <HiTrendingUp className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold gradient-text hidden sm:block">
-              Proffnitt
+              StalkMarket
             </span>
           </Link>
 
@@ -34,11 +34,10 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-6">
             <Link
               to="/"
-              className={`text-sm font-medium transition-colors duration-200 ${
-                location.pathname === '/'
+              className={`text-sm font-medium transition-colors duration-200 ${location.pathname === '/'
                   ? 'text-accent-cyan'
                   : 'text-gray-400 hover:text-white'
-              }`}
+                }`}
             >
               Dashboard
             </Link>
@@ -84,11 +83,10 @@ const Navbar = () => {
             <Link
               to="/"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-lg text-sm font-medium ${
-                location.pathname === '/'
+              className={`block px-3 py-2 rounded-lg text-sm font-medium ${location.pathname === '/'
                   ? 'text-accent-cyan bg-accent-cyan/10'
                   : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
+                }`}
             >
               Dashboard
             </Link>
